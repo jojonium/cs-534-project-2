@@ -1,9 +1,9 @@
-CS 534 Project 2
+# CS 534 Project 2
 
 ## Set up
 
-First, install Node.js and npm if you haven't already. Then install all the
-dependencies of the project:
+First, install [Node.js](https://nodejs.org/en/) if you haven't already. Then
+install all the dependencies of the project:
 
 ```
 $ npm install
