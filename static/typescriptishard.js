@@ -10,16 +10,20 @@ function main() {
     csvInput.addEventListener("change", readFile);
     document.body.appendChild(csvInput);
 
+    const br = document.createElement("br");
+    document.body.appendChild(br);
+
     const outputArea = document.createElement("output");
     outputArea.id = "out";
     outputArea.innerHTML = "Results will go here";
     document.body.appendChild(outputArea);
-
 }
 
 window.onload = main;
 
-let dataPoints = [];
+let dataPoints = []; //the unlabeled data
+
+let numClusters = 3; //number of cluster centers to find
 
 
 const readFile = function () {
@@ -32,7 +36,7 @@ const readFile = function () {
         reader.result.split('\n').forEach(e => {
             if(e !== ''){
             document.getElementById("out").innerHTML += '<p>( ' + e + ')</p>';
-            dataPoint = e.split(',');
+            let dataPoint = e.split(',');
             dataPoints.push(dataPoint.map(parseFloat));
             }
         });
@@ -40,4 +44,7 @@ const readFile = function () {
     reader.readAsBinaryString(fileInput.files[0]);
 };
 
+const maximizeExpectations = function () {
+    console.log("");
+}
 
