@@ -38,8 +38,9 @@ def EM(numClusters):
 #does the probability calculation
 def probablity(x, mu, variance):
     sigma = variance
-    print(variance)
-    #print(np.exp(-0.5 * np.power(sigma, 2) * (np.power((distance(x, mu)), 2))))
+    # print(sigma)
+    # print(distance(x,mu))
+    # print(-0.5 * np.power(sigma, 2) * (np.power((distance(x, mu)), 2)))
     return np.exp(-0.5 * np.power(sigma, 2) * (np.power((distance(x, mu)), 2)))
 
 #calculates the variance
