@@ -39,10 +39,8 @@ def EM(numClusters):
 def probablity(x, mu, variance):
     sigma = variance
     if distance(x, mu) == 0:
-        print(np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log((np.power((10**-10), 2)))))
         return np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log((np.power((10**-10), 2))))
     else:
-        print(np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log((np.power((distance(x, mu)), 2)))))
         return np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log((np.power((distance(x, mu)), 2))))
 
 #calculates the variance
