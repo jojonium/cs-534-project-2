@@ -6,6 +6,7 @@ import sys
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 ##########################################################################
 # Basic
@@ -35,10 +36,13 @@ def EM(numClusters):
     #Perform EM
     #currently doing 10 iterations could be more
     '''todo: add random restarts'''
+    startTime = time.time()
+    curTime = startTime
+    #while(curTime < startTime + 10):
+    print("loop")
     for count in range(10):
         
-        #get the current variances now so I don't have to do that later
-        #for performance reasons (I think)
+        #get the current variances
         variances = centers.copy()
         for centerIndex in range(len(centers)):
             variances[centerIndex] = variance(points, centers[centerIndex])
@@ -46,9 +50,12 @@ def EM(numClusters):
         #expecatation
         for counter in range(len(points)):
             point = points[counter]
-            bestGuess = (0, expectation(points, centers, point, centers[0], variances[0]))
+            bestGuess = (0, 0)
+            total = 0.0
+            for cIndex in range(len(centers)):
+                total += probablity(point, centers[cIndex], variances[cIndex])
             for centerIndex in range(len(centers)):
-                testCenter = expectation(points, centers, point, centers[centerIndex], variances[centerIndex]) 
+                testCenter = expectation(points, centers, point, centers[centerIndex], variances[centerIndex], total) 
                 if testCenter > bestGuess[1]:
                     bestGuess = (centerIndex, testCenter)
             clusterGuess[counter] = bestGuess
@@ -60,20 +67,22 @@ def EM(numClusters):
                 if clusterGuess[index][0] == count and clusterGuess[index][1] >= 0.6:
                     tempPoints.append(points[index])
             centers[count] = maximization(tempPoints, centers, centers[count], variances[count])
-    
+    curTime = time.time()
+        
     #print the calculated centerss
+    print("Time elapsed: " + str(curTime-startTime) + " seconds")
     print(centers)
     plot(plotPoints, centers)
 
 
 
 #does the probability calculation
-def probablity(x, mu, variance):
-    sigma = variance
-    if distance(x, mu) == 0:
+def probablity(x, mu, sigma):
+    d = distance(x, mu)
+    if d == 0:
         return np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log((np.power((10**-10), 2))))
     else:
-        return np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log((np.power((distance(x, mu)), 2))))
+        return np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log((np.power(d, 2))))
 
 #calculates the variance
 def variance(points, mu):
@@ -94,12 +103,8 @@ def distance(p1, p2):
 # points are the x values
 # centers is the different means
 # i and j are point and the center
-def expectation(points, centers, i, j, variance):
-    v = variance
+def expectation(points, centers, i, j, v, total):
     p = probablity(i, j, v)
-    total = 0.0
-    for x in centers:
-        total += probablity(i, x, v)
     return p/total
 
 # does the maximization
@@ -107,9 +112,12 @@ def maximization(points, centers, j, variance):
     sum = np.zeros(len(points[0]))
     denom = 0
     for x in points:
+        total = 0.0
+        for c in centers:
+            total += probablity(x, c, variance)
         for count in range(len(sum)):
-            sum[count] += expectation(points, centers, x, j, variance) * x[count]
-        denom += expectation(points, centers, x, j, variance)
+            sum[count] += expectation(points, centers, x, j, variance, total) * x[count]
+        denom += expectation(points, centers, x, j, variance, total)
     average = points[0].copy()
     for count in range(len(average)):
         average[count] = sum[count]/denom
@@ -117,7 +125,7 @@ def maximization(points, centers, j, variance):
 
 ##########################################################################
 # Calculate the number of points (BIC)
-##########################################################################
+#########################################################################
 def BIC():
     print("Starting BIC...")
     #do BIC
@@ -125,7 +133,11 @@ def BIC():
 
     print("Completed BIC there are " + str(numClusters) + " clusters!")
     EM(numClusters)
+
+
+#########################################################################
 # scatter plots the points and cluster centers
+#########################################################################
 def plot(points, centers):
     x = []
     y = []
