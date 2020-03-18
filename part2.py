@@ -2,6 +2,7 @@ import csv
 import sys
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
 def EM(numClusters):
     #based on the video we had to watch for class:
@@ -13,6 +14,7 @@ def EM(numClusters):
             points.append(list(np.float_(row)))
     centers = np.empty(numClusters, dtype=object)
     tempPoints = points.copy()
+    plotPoints = points.copy()
     random.shuffle(tempPoints)
     for i in range(numClusters):
         centers[i] = tempPoints.pop()
@@ -23,7 +25,7 @@ def EM(numClusters):
             point = points[counter]
             bestGuess = centers[0]
             for center in centers:
-                testCenter = expectation(points, centers, point, center) 
+                testCenter = expectation(points, centers, point, center)
                 if testCenter > expectation(points, centers, point, bestGuess):
                     bestGuess = center
             clusterGuess[counter] = bestGuess
@@ -32,6 +34,7 @@ def EM(numClusters):
             centers[count] = maximization(points, centers, centers[count])
     #print the calculated centerss
     print(centers)
+    plot(plotPoints, centers)
 
 
 
@@ -83,10 +86,29 @@ def maximization(points, centers, j):
         average[count] = sum[count]/denom
     return average
 
+# scatter plots the points and cluster centers
+def plot(points, centers):
+    x = []
+    y = []
+    for i in points:
+        x.append(i[0])
+        y.append(i[1])
+    plt.scatter(x, y)
+
+    fig = plt.gcf()
+    ax = fig.gca()
+    for i in centers:
+        center_circle = plt.Circle((i[0], i[1]), 0.01, color = 'g')
+        # TODO radius of circle hard-coded, probably a better way to calculate
+        cluster_circle = plt.Circle((i[0], i[1]), 1, fill=False, edgecolor=random.choice(['r','b','y']))
+        ax.add_artist(center_circle)
+        ax.add_artist(cluster_circle)
+
+    plt.show()
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("The program needs 2 arguments file and number of clusters")
-        print("Example input: python part2.py test.csv 3")
-    else:
-        EM(int(sys.argv[2]))
+   if len(sys.argv) < 3:
+       print("The program needs 2 arguments file and number of clusters")
+       print("Example input: python part2.py test.csv 3")
+   else:
+       EM(int(sys.argv[2]))
