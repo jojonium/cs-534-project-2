@@ -34,7 +34,7 @@ def EM(numClusters):
     clusterGuess = np.empty(len(points), dtype=object)
 
     #Perform EM
-    #currently doing 10 iterations could be more
+    #currently doing 10 iterations should be more
     '''todo: add random restarts'''
     startTime = time.time()
     curTime = startTime
