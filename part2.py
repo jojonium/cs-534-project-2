@@ -5,6 +5,7 @@ import csv
 import sys
 import random
 import numpy as np
+import matplotlib.pyplot as plt
 
 ##########################################################################
 # Basic
@@ -25,6 +26,7 @@ def EM(numClusters):
     #choose random starting centers from the list of points
     centers = np.empty(numClusters, dtype=object)
     tempPoints = points.copy()
+    plotPoints = points.copy()
     random.shuffle(tempPoints)
     for i in range(numClusters):
         centers[i] = tempPoints.pop()
@@ -61,6 +63,7 @@ def EM(numClusters):
     
     #print the calculated centerss
     print(centers)
+    plot(plotPoints, centers)
 
 
 
@@ -122,6 +125,25 @@ def BIC():
 
     print("Completed BIC there are " + str(numClusters) + " clusters!")
     EM(numClusters)
+# scatter plots the points and cluster centers
+def plot(points, centers):
+    x = []
+    y = []
+    for i in points:
+        x.append(i[0])
+        y.append(i[1])
+    plt.scatter(x, y)
+
+    fig = plt.gcf()
+    ax = fig.gca()
+    for i in centers:
+        center_circle = plt.Circle((i[0], i[1]), 0.01, color = 'g')
+        # TODO radius of circle hard-coded, probably a better way to calculate
+        cluster_circle = plt.Circle((i[0], i[1]), 1, fill=False, edgecolor=random.choice(['r','b','y']))
+        ax.add_artist(center_circle)
+        ax.add_artist(cluster_circle)
+
+    plt.show()
 
 ##########################################################################
 # Main method and command line stuff
