@@ -32,6 +32,8 @@ def EM(numClusters):
     for i in range(numClusters):
         centers[i] = tempPoints.pop()
     clusterGuess = np.empty(len(points), dtype=object)
+    for index in range(len(clusterGuess)):
+        clusterGuess[index] = (0,0)
 
     #Perform EM
     #currently doing 10 iterations should be more
@@ -49,16 +51,17 @@ def EM(numClusters):
 
         #expecatation
         for counter in range(len(points)):
-            point = points[counter]
-            bestGuess = (0, 0)
-            total = 0.0
-            for cIndex in range(len(centers)):
-                total += probablity(point, centers[cIndex], variances[cIndex])
-            for centerIndex in range(len(centers)):
-                testCenter = expectation(points, centers, point, centers[centerIndex], variances[centerIndex], total) 
-                if testCenter > bestGuess[1]:
-                    bestGuess = (centerIndex, testCenter)
-            clusterGuess[counter] = bestGuess
+            if clusterGuess[counter][1] < 0.999:
+                point = points[counter]
+                bestGuess = (0, 0)
+                total = 0.0
+                for cIndex in range(len(centers)):
+                    total += probablity(point, centers[cIndex], variances[cIndex])
+                for centerIndex in range(len(centers)):
+                    testCenter = expectation(points, centers, point, centers[centerIndex], variances[centerIndex], total) 
+                    if testCenter > bestGuess[1]:
+                        bestGuess = (centerIndex, testCenter)
+                clusterGuess[counter] = bestGuess
         
         #maximization
         for count in range(len(centers)):
@@ -82,13 +85,13 @@ def probablity(x, mu, sigma):
     if d == 0:
         return np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log((np.power((10**-10), 2))))
     else:
-        return np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log((np.power(d, 2))))
+        return np.exp(-0.5 * np.log(np.power(sigma, 2)) * np.log(d))
 
 #calculates the variance
 def variance(points, mu):
     s2 = 0
     for x in points:
-        s2 += np.power((distance(x, mu)), 2)
+        s2 += distance(x, mu)
     return s2 / (len(points))
 
 #calculates a point minus another point
@@ -96,7 +99,6 @@ def distance(p1, p2):
     dist = 0
     for index in range(len(p1)):
         dist += np.power((p1[index]-p2[index]), 2)
-    dist = np.sqrt(dist)
     return dist
 
 # calculates the expectation
