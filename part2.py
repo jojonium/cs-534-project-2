@@ -56,11 +56,9 @@ def EMIteration(points, numClusters):
     clusterGuess = np.empty(len(points), dtype=object)
     for index in range(len(clusterGuess)):
         clusterGuess[index] = (0,0)
-    
-    improvement = 1
 
     for count in range(10):
-        
+
         #get the current variances
         variances = centers.copy()
         for centerIndex in range(len(centers)):
@@ -87,6 +85,9 @@ def EMIteration(points, numClusters):
                 if clusterGuess[index][0] == count and clusterGuess[index][1] >= 0.6:
                     tempPoints.append(points[index])
             centers[count] = maximization(tempPoints, centers, centers[count], variances[count])
+
+        logLikelihood = calculateLogLikelihood(points, centers, variances)
+
 
     #get the logLikelihood
     variances = centers.copy()
@@ -192,14 +193,13 @@ def BIC(points):
     for i in range(1, x):
         L = EMIteration(points, numClusters)[2]
         temp = calculateBIC(L, n, k)
-        print(temp)
         if temp >= bestBIC:
             numClusters = i
             bestBIC = temp
         
 
     print("Completed BIC there are " + str(numClusters) + " clusters!")
-    print("The BIC score is: " + str(bestBIC) + "!")
+    print("The BIC score is: " + str(bestBIC))
     EM(numClusters, points)
 
 #calculates BIC value as mentioned in the wikipedia article
