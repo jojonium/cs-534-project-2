@@ -30,6 +30,7 @@ def EM(numClusters, points):
         if LL > bestLL:
             bestLL = LL
             bestCenters = centers
+            print("Improved")
 
         curTime = time.time()
         
@@ -39,44 +40,46 @@ def EM(numClusters, points):
     print("The log likelihood is: " + str(LL))
 
     plotPoints = points.copy()
-    plot(plotPoints, centers)
-
-    
+    plot(plotPoints, clusterGuess, numClusters, centers)
 
 
 #Does one iteration of EM
 def EMIteration(points, numClusters):
     #choose random starting centers from the list of points
     centers = np.empty(numClusters, dtype=object)
-    tempPoints = points.copy()
-    
-    random.shuffle(tempPoints)
+    shuffledPoints = points.copy()
+    plotPoints = points.copy()
+    random.shuffle(shuffledPoints)
     for i in range(numClusters):
-        centers[i] = tempPoints.pop()
+        centers[i] = shuffledPoints.pop()
     clusterGuess = np.empty(len(points), dtype=object)
     for index in range(len(clusterGuess)):
         clusterGuess[index] = (0,0)
-
-    for count in range(10):
-
+    #Perform EM
+    '''todo: add random restarts'''
+    startTime = time.time()
+    curTime = startTime
+    for i in range(10):
         #get the current variances
-        variances = centers.copy()
+        variances = np.empty(numClusters)
         for centerIndex in range(len(centers)):
             variances[centerIndex] = variance(points, centers[centerIndex])
 
-        #expecatation
+        #expectation
         for counter in range(len(points)):
-            if clusterGuess[counter][1] < 0.999:
-                point = points[counter]
-                bestGuess = (0, 0)
-                total = 0.0
-                for cIndex in range(len(centers)):
-                    total += probablity(point, centers[cIndex], variances[cIndex])
-                for centerIndex in range(len(centers)):
-                    testCenter = expectation(points, centers, point, centers[centerIndex], variances[centerIndex], total) 
-                    if testCenter > bestGuess[1]:
-                        bestGuess = (centerIndex, testCenter)
-                clusterGuess[counter] = bestGuess
+            #don't recalculate points we're really sure about
+            if clusterGuess[counter][1] > 0.99:
+                continue
+            point = points[counter]
+            bestGuess = (0, 0)
+            total = 0.0
+            for cIndex in range(len(centers)):
+                total += probablity(point, centers[cIndex], variances[cIndex])
+            for centerIndex in range(len(centers)):
+                testCenter = expectation(points, centers, point, centers[centerIndex], variances[centerIndex], total) 
+                if testCenter > bestGuess[1]:
+                    bestGuess = (centerIndex, testCenter)
+            clusterGuess[counter] = bestGuess
         
         #maximization
         for count in range(len(centers)):
@@ -85,9 +88,8 @@ def EMIteration(points, numClusters):
                 if clusterGuess[index][0] == count and clusterGuess[index][1] >= 0.6:
                     tempPoints.append(points[index])
             centers[count] = maximization(tempPoints, centers, centers[count], variances[count])
-
-        logLikelihood = calculateLogLikelihood(points, centers, variances)
-
+        
+    logLikelihood = calculateLogLikelihood(points, centers, variances)
 
     #get the logLikelihood
     variances = centers.copy()
@@ -113,7 +115,7 @@ def variance(points, mu):
         s2 += distance(x, mu)
     return s2 / (len(points))
 
-#calculates a point minus another point
+#calculates the square of the distance between two points
 def distance(p1, p2):
     dist = 0
     for index in range(len(p1)):
@@ -211,20 +213,30 @@ def calculateBIC(L, n, k=1):
 #########################################################################
 # scatter plots the points and cluster centers
 #########################################################################
-def plot(points, centers):
+def plot(points, cluster, numClusters, centers):
     x = []
     y = []
-    for i in points:
-        x.append(i[0])
-        y.append(i[1])
-    plt.scatter(x, y)
+    colors = np.empty(len(points), dtype=tuple)
+    clusterColors = [(random.random(), random.random(), random.random()) for i in range(numClusters)]
+    for i in range(len(points)):
+        x.append(points[i][0])
+        y.append(points[i][1])
+        if len(cluster) > 0:
+            col = clusterColors[cluster[i][0]]
+            alpha = max(0.3, min(1, (cluster[i][1] - 0.99) * 100))
+        else:
+            col = clusterColors[0]
+            alpha = 1
+        colors[i] = (col[0], col[1], col[2], alpha)
+    plt.scatter(x, y, c=colors)
 
     fig = plt.gcf()
     ax = fig.gca()
-    for i in centers:
-        center_circle = plt.Circle((i[0], i[1]), 0.01, color = 'g')
+    for i, c in enumerate(centers):
         # TODO radius of circle hard-coded, probably a better way to calculate
-        cluster_circle = plt.Circle((i[0], i[1]), 1, fill=False, edgecolor=random.choice(['r','b','y']))
+        col = [1 - c for c in clusterColors[i]]
+        center_circle = plt.Circle((c[0], c[1]), 0.01, color="black")
+        cluster_circle = plt.Circle((c[0], c[1]), 1, fill=False, edgecolor=col)
         ax.add_artist(center_circle)
         ax.add_artist(cluster_circle)
 
