@@ -26,42 +26,42 @@ def EM(numClusters):
     
     #choose random starting centers from the list of points
     centers = np.empty(numClusters, dtype=object)
-    tempPoints = points.copy()
+    shuffledPoints = points.copy()
     plotPoints = points.copy()
-    random.shuffle(tempPoints)
+    random.shuffle(shuffledPoints)
     for i in range(numClusters):
-        centers[i] = tempPoints.pop()
+        centers[i] = shuffledPoints.pop()
     clusterGuess = np.empty(len(points), dtype=object)
     for index in range(len(clusterGuess)):
         clusterGuess[index] = (0,0)
 
     #Perform EM
-    #currently doing 10 iterations should be more
     '''todo: add random restarts'''
     startTime = time.time()
     curTime = startTime
-    #while(curTime < startTime + 10):
-    print("loop")
-    for count in range(10):
-        
+    numIterations = 0
+    while True:
+        numIterations+= 1
         #get the current variances
-        variances = centers.copy()
+        variances = np.empty(numClusters)
         for centerIndex in range(len(centers)):
             variances[centerIndex] = variance(points, centers[centerIndex])
 
-        #expecatation
+        #expectation
         for counter in range(len(points)):
-            if clusterGuess[counter][1] < 0.999:
-                point = points[counter]
-                bestGuess = (0, 0)
-                total = 0.0
-                for cIndex in range(len(centers)):
-                    total += probablity(point, centers[cIndex], variances[cIndex])
-                for centerIndex in range(len(centers)):
-                    testCenter = expectation(points, centers, point, centers[centerIndex], variances[centerIndex], total) 
-                    if testCenter > bestGuess[1]:
-                        bestGuess = (centerIndex, testCenter)
-                clusterGuess[counter] = bestGuess
+            #don't recalculate points we're really sure about
+            if clusterGuess[counter][1] > 0.99:
+                continue
+            point = points[counter]
+            bestGuess = (0, 0)
+            total = 0.0
+            for cIndex in range(len(centers)):
+                total += probablity(point, centers[cIndex], variances[cIndex])
+            for centerIndex in range(len(centers)):
+                testCenter = expectation(points, centers, point, centers[centerIndex], variances[centerIndex], total) 
+                if testCenter > bestGuess[1]:
+                    bestGuess = (centerIndex, testCenter)
+            clusterGuess[counter] = bestGuess
         
         #maximization
         for count in range(len(centers)):
@@ -70,10 +70,14 @@ def EM(numClusters):
                 if clusterGuess[index][0] == count and clusterGuess[index][1] >= 0.6:
                     tempPoints.append(points[index])
             centers[count] = maximization(tempPoints, centers, centers[count], variances[count])
-    curTime = time.time()
+
+        curTime = time.time()
+        if(curTime >= startTime + 10):
+            break
         
     #print the calculated centerss
     print("Time elapsed: " + str(curTime-startTime) + " seconds")
+    print("Iterations: " + str(numIterations))
     print(centers)
     plot(plotPoints, centers)
 
@@ -94,7 +98,7 @@ def variance(points, mu):
         s2 += distance(x, mu)
     return s2 / (len(points))
 
-#calculates a point minus another point
+#calculates the square of the distance between two points
 def distance(p1, p2):
     dist = 0
     for index in range(len(p1)):
