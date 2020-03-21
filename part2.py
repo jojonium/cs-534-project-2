@@ -79,7 +79,7 @@ def EM(numClusters):
     print("Time elapsed: " + str(curTime-startTime) + " seconds")
     print("Iterations: " + str(numIterations))
     print(centers)
-    plot(plotPoints, centers)
+    plot(plotPoints, clusterGuess, numClusters, centers)
 
 
 
@@ -144,20 +144,26 @@ def BIC():
 #########################################################################
 # scatter plots the points and cluster centers
 #########################################################################
-def plot(points, centers):
+def plot(points, cluster, numClusters, centers):
     x = []
     y = []
-    for i in points:
-        x.append(i[0])
-        y.append(i[1])
-    plt.scatter(x, y)
+    colors = np.empty(len(points), dtype=tuple)
+    clusterColors = [(random.random(), random.random(), random.random()) for i in range(numClusters)]
+    for i in range(len(points)):
+        x.append(points[i][0])
+        y.append(points[i][1])
+        col = clusterColors[cluster[i][0]]
+        alpha = max(0.3, min(1, (cluster[i][1] - 0.99) * 100))
+        colors[i] = (col[0], col[1], col[2], alpha)
+    plt.scatter(x, y, c=colors)
 
     fig = plt.gcf()
     ax = fig.gca()
-    for i in centers:
-        center_circle = plt.Circle((i[0], i[1]), 0.01, color = 'g')
+    for i, c in enumerate(centers):
         # TODO radius of circle hard-coded, probably a better way to calculate
-        cluster_circle = plt.Circle((i[0], i[1]), 1, fill=False, edgecolor=random.choice(['r','b','y']))
+        col = [1 - c for c in clusterColors[i]]
+        center_circle = plt.Circle((c[0], c[1]), 0.01, color="black")
+        cluster_circle = plt.Circle((c[0], c[1]), 1, fill=False, edgecolor=col)
         ax.add_artist(center_circle)
         ax.add_artist(cluster_circle)
 
