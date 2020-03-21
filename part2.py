@@ -8,40 +8,57 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 
-##########################################################################
-# Basic
-##########################################################################
+#########################################################################
+# Basic EM Stuff
+#########################################################################
 
-def EM(numClusters):
-    print("Starting EM")
+def EM(numClusters, points):
+    print("Running EM")
     #based on the video we had to watch for class:
     #https://www.youtube.com/watch?v=QQJHsKfNqG8&list=PLAwxTw4SYaPmaHhu-Lz3mhLSj-YH-JnG7&index=53
-    points = []
-
-    #read from csv
-    with open(sys.argv[1]) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        for row in csv_reader:
-            points.append(list(np.float_(row)))
     
+
+    #Perform EM
+    bestLL = 0
+    bestCenters = []
+    #currently doing 10 iterations should be more
+    startTime = time.time()
+    curTime = startTime
+    while(curTime < startTime + 10):
+        centers, clusterGuess, LL = EMIteration(points, numClusters)
+
+        if LL > bestLL:
+            bestLL = LL
+            bestCenters = centers
+
+        curTime = time.time()
+        
+    #print the calculated centerss
+    print("Time elapsed: " + str(curTime-startTime) + " seconds")
+    print("The centers are: " + str(centers))
+    print("The log likelihood is: " + str(LL))
+
+    plotPoints = points.copy()
+    plot(plotPoints, centers)
+
+    
+
+
+#Does one iteration of EM
+def EMIteration(points, numClusters):
     #choose random starting centers from the list of points
     centers = np.empty(numClusters, dtype=object)
     tempPoints = points.copy()
-    plotPoints = points.copy()
+    
     random.shuffle(tempPoints)
     for i in range(numClusters):
         centers[i] = tempPoints.pop()
     clusterGuess = np.empty(len(points), dtype=object)
     for index in range(len(clusterGuess)):
         clusterGuess[index] = (0,0)
+    
+    improvement = 1
 
-    #Perform EM
-    #currently doing 10 iterations should be more
-    '''todo: add random restarts'''
-    startTime = time.time()
-    curTime = startTime
-    #while(curTime < startTime + 10):
-    print("loop")
     for count in range(10):
         
         #get the current variances
@@ -70,13 +87,14 @@ def EM(numClusters):
                 if clusterGuess[index][0] == count and clusterGuess[index][1] >= 0.6:
                     tempPoints.append(points[index])
             centers[count] = maximization(tempPoints, centers, centers[count], variances[count])
-    curTime = time.time()
-        
-    #print the calculated centerss
-    print("Time elapsed: " + str(curTime-startTime) + " seconds")
-    print(centers)
-    plot(plotPoints, centers)
 
+    #get the logLikelihood
+    variances = centers.copy()
+    for centerIndex in range(len(centers)):
+        variances[centerIndex] = variance(points, centers[centerIndex])
+    logLikelihood = calculateLogLikelihood(points, centers, variances)
+
+    return centers, clusterGuess, logLikelihood
 
 
 #does the probability calculation
@@ -125,16 +143,69 @@ def maximization(points, centers, j, variance):
         average[count] = sum[count]/denom
     return average
 
-##########################################################################
+
+#open points
+def readCSVPoints():
+    points = []
+
+    #read from csv
+    with open(sys.argv[1]) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        for row in csv_reader:
+            points.append(list(np.float_(row)))
+
+    return points
+
+#calculates the log likelihood
+#based on the spreadsheet candy example
+# LL = sum LL of each point
+# LL of each point = data * Log(P(data))
+### I'm not sure what the data means but I used the expectation as the data?
+def calculateLogLikelihood(points, centers, v):
+    LL = 0
+    total = 0
+    for point in points:
+        for cIndex in range(len(centers)):
+            total += probablity(point, centers[cIndex], v[cIndex])
+        for c in range(len(centers)):
+            LL += expectation(points, centers, point, centers[c], v[c], total) * probablity(point, centers[c], v[c])
+    return LL
+
+#########################################################################
 # Calculate the number of points (BIC)
 #########################################################################
-def BIC():
+
+#https://en.wikipedia.org/wiki/Bayesian_information_criterion#Definition
+def BIC(points):
     print("Starting BIC...")
     #do BIC
-    numClusters = 0
+    numClusters = 1
+    bestBIC = float('-inf')
+
+    k=1
+    n = len(points)
+
+    x = n
+    if x > 10:
+        x = 10
+    
+    for i in range(1, x):
+        L = EMIteration(points, numClusters)[2]
+        temp = calculateBIC(L, n, k)
+        print(temp)
+        if temp >= bestBIC:
+            numClusters = i
+            bestBIC = temp
+        
 
     print("Completed BIC there are " + str(numClusters) + " clusters!")
-    EM(numClusters)
+    print("The BIC score is: " + str(bestBIC) + "!")
+    EM(numClusters, points)
+
+#calculates BIC value as mentioned in the wikipedia article
+def calculateBIC(L, n, k=1):
+    b = (np.log(n) * k) - (2 * np.log(L))
+    return b
 
 
 #########################################################################
@@ -159,14 +230,16 @@ def plot(points, centers):
 
     plt.show()
 
-##########################################################################
+#########################################################################
 # Main method and command line stuff
-##########################################################################
+#########################################################################
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("The program needs 2 arguments file and number of clusters")
         print("Example input: python part2.py test.csv 3")
     elif sys.argv[2] == "0":
-        BIC()
+        points = readCSVPoints()
+        BIC(points)
     else:
-        EM(int(sys.argv[2]))
+        points = readCSVPoints()
+        EM(int(sys.argv[2]), points)
