@@ -30,7 +30,6 @@ def EM(numClusters, points):
         if LL > bestLL:
             bestLL = LL
             bestCenters = centers
-            print("Improved")
 
         curTime = time.time()
         
@@ -56,7 +55,6 @@ def EMIteration(points, numClusters):
     for index in range(len(clusterGuess)):
         clusterGuess[index] = (0,0)
     #Perform EM
-    '''todo: add random restarts'''
     startTime = time.time()
     curTime = startTime
     for i in range(10):
@@ -193,8 +191,12 @@ def BIC(points):
         x = 10
     
     for i in range(1, x):
-        L = EMIteration(points, numClusters)[2]
-        temp = calculateBIC(L, n, k)
+        #old code (forgot to iterate num clusters)
+        #L = EMIteration(points, numClusters)[2]
+        L = EMIteration(points, i)[2]
+        #old code
+        #temp = calculateBIC(L, n, k)
+        temp = calculateBIC(L, n, i+np.power(i,2))
         if temp >= bestBIC:
             numClusters = i
             bestBIC = temp
@@ -205,7 +207,7 @@ def BIC(points):
     EM(numClusters, points)
 
 #calculates BIC value as mentioned in the wikipedia article
-def calculateBIC(L, n, k=1):
+def calculateBIC(L, n, k):
     b = (np.log(n) * k) - (2 * np.log(L))
     return b
 
