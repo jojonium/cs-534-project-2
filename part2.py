@@ -176,31 +176,28 @@ def calculateLogLikelihood(points, centers, v):
 # Calculate the number of points (BIC)
 #########################################################################
 
-#https://en.wikipedia.org/wiki/Bayesian_information_criterion#Definition
+#https://en.wikipedia.org/wiki/Bayesian_information_criterion
 def BIC(points):
     print("Starting BIC...")
-    #do BIC
     numClusters = 1
-    bestBIC = float('-inf')
-
-    k=1
+    bestBIC = float('inf')
     n = len(points)
+    strikes = 0
 
-    x = n
-    if x > 10:
-        x = 10
-    
-    for i in range(1, x):
-        #old code (forgot to iterate num clusters)
-        #L = EMIteration(points, numClusters)[2]
-        L = EMIteration(points, i)[2]
-        #old code
-        #temp = calculateBIC(L, n, k)
-        temp = calculateBIC(L, n, i+np.power(i,2))
-        if temp >= bestBIC:
-            numClusters = i
+    for k in range(1, max(n // 10, min(n, 100))):
+        L = EMIteration(points, k)[2]
+        temp = calculateBIC(L, n, k)
+        print(temp)
+        if temp < bestBIC:
+            numClusters = k
+            print("num clusters: {}".format(numClusters))
             bestBIC = temp
-        
+            strikes = 0
+        else:
+            # stop if we get a worse score three times in a row
+            strikes+= 1
+            if strikes >= 3:
+                break
 
     print("Completed BIC there are " + str(numClusters) + " clusters!")
     print("The BIC score is: " + str(bestBIC))
@@ -208,8 +205,8 @@ def BIC(points):
 
 #calculates BIC value as mentioned in the wikipedia article
 def calculateBIC(L, n, k):
-    b = (np.log(n) * k) - (2 * np.log(L))
-    return b
+    # we don't take the natural log of L because it's already the log likelihood
+    return np.log(n) * k - 2 * L
 
 
 #########################################################################
