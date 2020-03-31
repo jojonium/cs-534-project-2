@@ -23,7 +23,9 @@ def EM(numClusters, points):
     bestCenters = []
     #currently doing 10 iterations should be more
     startTime = time.time()
-    curTime = startTime
+    if numClusters == 0:
+        numClusters = BIC(points)
+    curTime = time.time()
     while(curTime < startTime + 10):
         centers, clusterGuess, LL = EMIteration(points, numClusters)
 
@@ -199,7 +201,7 @@ def BIC(points):
 
     print("Completed BIC there are " + str(numClusters) + " clusters!")
     print("The BIC score is: " + str(bestBIC))
-    EM(numClusters, points)
+    return numClusters
 
 #calculates BIC value as mentioned in the wikipedia article
 def calculateBIC(L, n, k):
@@ -246,9 +248,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("The program needs 2 arguments file and number of clusters")
         print("Example input: python part2.py test.csv 3")
-    elif sys.argv[2] == "0":
-        points = readCSVPoints()
-        BIC(points)
-    else:
-        points = readCSVPoints()
-        EM(int(sys.argv[2]), points)
+    points = readCSVPoints()
+    EM(int(sys.argv[2]), points)
