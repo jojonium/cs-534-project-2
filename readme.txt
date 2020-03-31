@@ -20,3 +20,7 @@ Where test.csv is the file you want to test and #clusters
 is the number of clusters to find. If you use an input of
 0. The program will use Bayesian Information Criterion to
 attempt to generate the number of clusters.
+
+An error may occur if your computer is slow and BIC 
+runs for over 10 seconds, if this occurs we can help fix 
+that. Hopefully you have a reasonably good PC.
