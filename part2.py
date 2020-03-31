@@ -23,14 +23,15 @@ def EM(numClusters, points):
     bestCenters = []
     #currently doing 10 iterations should be more
     startTime = time.time()
-    curTime = startTime
+    if numClusters == 0:
+        numClusters = BIC(points)
+    curTime = time.time()
     while(curTime < startTime + 10):
         centers, clusterGuess, LL = EMIteration(points, numClusters)
 
         if LL > bestLL:
             bestLL = LL
             bestCenters = centers
-            print("Improved")
 
         curTime = time.time()
         
@@ -56,7 +57,6 @@ def EMIteration(points, numClusters):
     for index in range(len(clusterGuess)):
         clusterGuess[index] = (0,0)
     #Perform EM
-    '''todo: add random restarts'''
     startTime = time.time()
     curTime = startTime
     for i in range(10):
@@ -178,36 +178,35 @@ def calculateLogLikelihood(points, centers, v):
 # Calculate the number of points (BIC)
 #########################################################################
 
-#https://en.wikipedia.org/wiki/Bayesian_information_criterion#Definition
+#https://en.wikipedia.org/wiki/Bayesian_information_criterion
 def BIC(points):
     print("Starting BIC...")
-    #do BIC
     numClusters = 1
-    bestBIC = float('-inf')
-
-    k=1
+    bestBIC = float('inf')
     n = len(points)
+    strikes = 0
 
-    x = n
-    if x > 10:
-        x = 10
-    
-    for i in range(1, x):
-        L = EMIteration(points, numClusters)[2]
+    for k in range(1, max(n // 10, min(n, 100))):
+        L = EMIteration(points, k)[2]
         temp = calculateBIC(L, n, k)
-        if temp >= bestBIC:
-            numClusters = i
+        if temp < bestBIC:
+            numClusters = k
             bestBIC = temp
-        
+            strikes = 0
+        else:
+            # stop if we get a worse score three times in a row
+            strikes+= 1
+            if strikes >= 3:
+                break
 
     print("Completed BIC there are " + str(numClusters) + " clusters!")
     print("The BIC score is: " + str(bestBIC))
-    EM(numClusters, points)
+    return numClusters
 
 #calculates BIC value as mentioned in the wikipedia article
-def calculateBIC(L, n, k=1):
-    b = (np.log(n) * k) - (2 * np.log(L))
-    return b
+def calculateBIC(L, n, k):
+    # we don't take the natural log of L because it's already the log likelihood
+    return np.log(n) * k - 2 * L
 
 
 #########################################################################
@@ -249,9 +248,5 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("The program needs 2 arguments file and number of clusters")
         print("Example input: python part2.py test.csv 3")
-    elif sys.argv[2] == "0":
-        points = readCSVPoints()
-        BIC(points)
-    else:
-        points = readCSVPoints()
-        EM(int(sys.argv[2]), points)
+    points = readCSVPoints()
+    EM(int(sys.argv[2]), points)
