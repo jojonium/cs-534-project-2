@@ -187,10 +187,8 @@ def BIC(points):
     for k in range(1, max(n // 10, min(n, 100))):
         L = EMIteration(points, k)[2]
         temp = calculateBIC(L, n, k)
-        print(temp)
         if temp < bestBIC:
             numClusters = k
-            print("num clusters: {}".format(numClusters))
             bestBIC = temp
             strikes = 0
         else:
