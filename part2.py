@@ -26,6 +26,9 @@ def EM(numClusters, points):
     if numClusters == 0:
         numClusters = BIC(points)
     curTime = time.time()
+    if(curTime >= startTime + 10):
+        print("Error: ran out of time while doing BIC!")
+        sys.exit(1)
     while(curTime < startTime + 10):
         centers, clusterGuess, LL = EMIteration(points, numClusters)
 
